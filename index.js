@@ -3,14 +3,14 @@ const express = require('express')
 // var axios = require('axios');
 // var request = require('request');
 // var http = require('http')
-const rp      = require('request-promise-native');
+const rp = require('request-promise-native');
 const app = express()
 const port = 3003
 
 const api_model = require('./api_model');
 const { response } = require('express');
 
-app.use(express.json())
+
 app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000 ');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
@@ -59,7 +59,47 @@ app.get('/station', (req, res) => {
       res.status(500).send(error);
     })
   })
-  
+
+app.get('/summaryValues', (req, res) => {
+  api_model.getSummary()
+    .then(response => {
+      res.status(200).send(response);
+    })
+    .catch(error => {
+      res.status(500).send(error);
+    })
+  })
+
+app.get('/summaryFailed', (req, res) => {
+  api_model.getFailed()
+    .then(response => {
+      res.status(200).send(response);
+    })
+    .catch(error => {
+      res.status(500).send(error);
+    })
+  })
+
+  app.use(express.json());
+  app.post('/newDay', (req, res) => {
+    api_model.pushNewDay(req.body)
+    .then(response => {
+      res.status(200).send(response);
+      })
+    .catch(error => {
+      res.status(500).send(error);
+    })
+  }) 
+
+// app.post('/newday', (req, res) => {
+//   api_model.pushNewDay(req.body)
+//   // console.log(req.body)
+//   .then(response => {
+//     res.status(200).send(req.body);
+//   })
+
+//   throw new Error('Something broke! ')
+// })
 
 app.listen(port, () => {
   console.log(`App running on port ${port}.`)
