@@ -80,7 +80,67 @@ app.get('/summaryFailed', (req, res) => {
     })
   })
 
-  app.use(express.json());
+app.get('/chademo', (req, res) => {
+  api_model.getChademo()
+    .then(response => {
+      res.status(200).send(response);
+    })
+    .catch(error => {
+      res.status(500).send(error);
+    })
+  })
+
+app.get('/ccs', (req, res) => {
+  api_model.getCCS()
+    .then(response => {
+      res.status(200).send(response);
+    })
+    .catch(error => {
+      res.status(500).send(error);
+    })
+  })
+
+app.get('/type2', (req, res) => {
+  api_model.getType2()
+    .then(response => {
+      res.status(200).send(response);
+    })
+    .catch(error => {
+      res.status(500).send(error);
+    })
+  })
+
+app.get('/type2plug', (req, res) => {
+  api_model.getType2Plug()
+    .then(response => {
+      res.status(200).send(response);
+    })
+    .catch(error => {
+      res.status(500).send(error);
+    })
+  })
+  
+app.get('/locationinfo/:id', (req, res) => {
+  api_model.getLocationInfo(req.params['id'])
+    .then(response => {
+      res.status(200).send(response);
+    })
+    .catch(error => {
+      res.status(500).send(error);
+    })
+})
+
+app.get('/sessioninfo/:id', (req, res) => {
+  api_model.getSessionInfo(req.params['id'])
+    .then(response => {
+      res.status(200).send(response);
+    })
+    .catch(error => {
+      res.status(500).send(error);
+    })
+})
+
+app.use(express.json());
   app.post('/newDay', (req, res) => {
     api_model.pushNewDay(req.body)
     .then(response => {

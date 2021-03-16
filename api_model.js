@@ -57,6 +57,72 @@ const getFailed = () => {
   }) 
 }
 
+const getChademo = () => {
+  return new Promise(function(resolve, reject) {
+    pool.query("select sum(kwh) as chademokwh, sum(totalcost) as chademototal, count(friendlycode) as sessioncount from econprofit.sessions where connector = 'Пистолет CHAdeMO'", (error, results) => {
+      if (error) {
+        reject(error)
+      }
+      resolve(results.rows);
+    })
+  }) 
+}
+
+const getCCS = () => {
+  return new Promise(function(resolve, reject) {
+    pool.query("select sum(kwh) as ccskwh, sum(totalcost) as ccstotal, count(friendlycode) as sessioncount from econprofit.sessions where connector = 'Пистолет CCS'", (error, results) => {
+      if (error) {
+        reject(error)
+      }
+      resolve(results.rows);
+    })
+  }) 
+}
+
+const getType2 = () => {
+  return new Promise(function(resolve, reject) {
+    pool.query("select sum(kwh) as type2kwh, sum(totalcost) as type2total, count(friendlycode) as sessioncount from econprofit.sessions where connector = 'Вилка Type 2'", (error, results) => {
+      if (error) {
+        reject(error)
+      }
+      resolve(results.rows);
+    })
+  }) 
+}
+
+const getType2Plug = () => {
+  return new Promise(function(resolve, reject) {
+    pool.query("select sum(kwh) as type2plugkwh, sum(totalcost) as type2plugtotal, count(friendlycode) as sessioncount from econprofit.sessions where connector = 'Розетка Type 2'", (error, results) => {
+      if (error) {
+        reject(error)
+      }
+      resolve(results.rows);
+    })
+  }) 
+}
+
+const getLocationInfo = (id) => {
+  return new Promise(function(resolve, reject) {
+    pool.query('select * from econprofit.stations, econprofit.locations where econprofit.stations.locationid = econprofit.locations.id and econprofit.locations.id = $1', [id], (error, results) => {
+      if (error) {
+        reject(error)
+      }
+      resolve(results.rows);
+    })
+  }) 
+}
+
+const getSessionInfo = (id) => {
+  return new Promise(function(resolve, reject) {
+    pool.query('select * from econprofit.sessions where econprofit.sessions.friendlycode = $1', [id], (error, results) => {
+      if (error) {
+        reject(error)
+      }
+      resolve(results.rows);
+    })
+  }) 
+}
+
 const pushNewDay = (body) => {
   return new Promise(function(resolve, reject) {
     // console.log(body)
@@ -75,5 +141,11 @@ module.exports = {
   getStations,
   pushNewDay,
   getSummary,
-  getFailed
+  getFailed,
+  getChademo,
+  getCCS,
+  getType2,
+  getType2Plug,
+  getLocationInfo,
+  getSessionInfo
 }
