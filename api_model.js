@@ -114,7 +114,29 @@ const getLocationInfo = (id) => {
 
 const getSessionInfo = (id) => {
   return new Promise(function(resolve, reject) {
-    pool.query('select * from econprofit.sessions where econprofit.sessions.friendlycode = $1', [id], (error, results) => {
+    pool.query('select * from econprofit.sessions, econprofit.stations where econprofit.sessions.friendlycode = econprofit.stations.friendlycode and econprofit.stations.locationid = $1', [id], (error, results) => {
+      if (error) {
+        reject(error)
+      }
+      resolve(results.rows);
+    })
+  }) 
+}
+
+const getByRegion = () => {
+  return new Promise(function(resolve, reject) {
+    pool.query('select econprofit.locations.company, sum(kwh) as sumkwh, sum(totalcost) as sumtotal, count(econprofit.sessions.id) from econprofit.sessions, econprofit.stations, econprofit.locations where econprofit.stations.friendlycode = econprofit.sessions.friendlycode and econprofit.stations.locationid = econprofit.locations.id GROUP BY econprofit.locations.company', (error, results) => {
+      if (error) {
+        reject(error)
+      }
+      resolve(results.rows);
+    })
+  }) 
+}
+
+const getByConnector = () => {
+  return new Promise(function(resolve, reject) {
+    pool.query('select connector, sum(kwh) as sumkwh  from econprofit.sessions where kwh >= 0.5 group by connector', (error, results) => {
       if (error) {
         reject(error)
       }
@@ -147,5 +169,7 @@ module.exports = {
   getType2,
   getType2Plug,
   getLocationInfo,
-  getSessionInfo
+  getSessionInfo,
+  getByRegion,
+  getByConnector
 }

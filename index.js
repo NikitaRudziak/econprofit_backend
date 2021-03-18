@@ -19,19 +19,32 @@ app.use(function (req, res, next) {
 });
 
 // let testing = '1';
-const options = {
-  uri: 'https://belorusneft.etrel.com/UrchinWebApi/chargingSessions?pageNumber=1&sortColumn=energyConsumtion&sortDirection=asc&chargingFrom=2021-01-01T10:30:35.1100000Z&chargingTo=2021-01-02T00:00:00.1100000Z',
-  headers: {
-    'User-Agent': 'Request-Promise',
-    'Content-Type': 'application/json; charset=utf-8', 
-    'Accept': 'application/json', 
-    'Authorization': 'Basic QVBJQUNDRVNTLTEzNDk6dDV3dFJEUkxQZFhncTYwVVhnS3NhQzVRWWFmU0VpMzk='
-  },
-  json: true // Automatically parses the JSON string in the response
-};
+const testing = (from, to) => {
+  const options = {
+    uri: `https://belorusneft.etrel.com/UrchinWebApi/chargingSessions?pageNumber=1&sortColumn=energyConsumtion&sortDirection=asc&chargingFrom=${from}&chargingTo=${to}`,
+    headers: {
+      'User-Agent': 'Request-Promise',
+      'Content-Type': 'application/json; charset=utf-8', 
+      'Accept': 'application/json', 
+      'Authorization': 'Basic QVBJQUNDRVNTLTEzNDk6dDV3dFJEUkxQZFhncTYwVVhnS3NhQzVRWWFmU0VpMzk='
+    },
+    json: true // Automatically parses the JSON string in the response
+  };
+  return options
+}
+// const options = {
+//   uri: 'https://belorusneft.etrel.com/UrchinWebApi/chargingSessions?pageNumber=1&sortColumn=energyConsumtion&sortDirection=asc&chargingFrom=2021-03-15T00:00:01.1100000Z&chargingTo=2021-03-18T00:00:00.1100000Z',
+//   headers: {
+//     'User-Agent': 'Request-Promise',
+//     'Content-Type': 'application/json; charset=utf-8', 
+//     'Accept': 'application/json', 
+//     'Authorization': 'Basic QVBJQUNDRVNTLTEzNDk6dDV3dFJEUkxQZFhncTYwVVhnS3NhQzVRWWFmU0VpMzk='
+//   },
+//   json: true // Automatically parses the JSON string in the response
+// };
 
-app.get('/test', (req,res) => {
-  rp(options)
+app.get('/test/:from/:to', (req,res) => {
+  rp(testing(req.params['from'], req.params['to']))
     .then(parsedBody => {
       res.send(parsedBody);
   })
@@ -80,6 +93,16 @@ app.get('/summaryFailed', (req, res) => {
     })
   })
 
+app.get('/summarybyregion', (req, res) => {
+  api_model.getByRegion()
+    .then(response => {
+      res.status(200).send(response);
+    })
+    .catch(error => {
+      res.status(500).send(error);
+    })
+  })
+
 app.get('/chademo', (req, res) => {
   api_model.getChademo()
     .then(response => {
@@ -112,6 +135,16 @@ app.get('/type2', (req, res) => {
 
 app.get('/type2plug', (req, res) => {
   api_model.getType2Plug()
+    .then(response => {
+      res.status(200).send(response);
+    })
+    .catch(error => {
+      res.status(500).send(error);
+    })
+  })
+
+app.get('/byconnector', (req, res) => {
+  api_model.getByConnector()
     .then(response => {
       res.status(200).send(response);
     })
