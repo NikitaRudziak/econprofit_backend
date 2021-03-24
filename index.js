@@ -18,10 +18,10 @@ app.use(function (req, res, next) {
   next();
 });
 
-// let testing = '1';
 const testing = (from, to) => {
   const options = {
     uri: `https://belorusneft.etrel.com/UrchinWebApi/chargingSessions?pageNumber=1&sortColumn=energyConsumtion&sortDirection=asc&chargingFrom=${from}&chargingTo=${to}`,
+    // uri: `https://belorusneft.etrel.com/UrchinWebApi/chargingSessions?pageNumber=1&sortColumn=energyConsumtion&sortDirection=asc&chargingFrom=2021-03-18&chargingTo=2021-03-22`,
     headers: {
       'User-Agent': 'Request-Promise',
       'Content-Type': 'application/json; charset=utf-8', 
@@ -165,6 +165,35 @@ app.get('/locationinfo/:id', (req, res) => {
 
 app.get('/sessioninfo/:id', (req, res) => {
   api_model.getSessionInfo(req.params['id'])
+    .then(response => {
+      res.status(200).send(response);
+    })
+    .catch(error => {
+      res.status(500).send(error);
+    })
+})
+
+app.get('/percentinfo', (req, res) => {
+  api_model.getPercentInfo()
+    .then(response => {
+      res.status(200).send(response);
+    })
+    .catch(error => {
+      res.status(500).send(error);
+    })
+})
+app.get('/countinfo', (req, res) => {
+  api_model.getCountInfo()
+    .then(response => {
+      res.status(200).send(response);
+    })
+    .catch(error => {
+      res.status(500).send(error);
+    })
+})
+
+app.get('/lastdate', (req, res) => {
+  api_model.getLastDate()
     .then(response => {
       res.status(200).send(response);
     })

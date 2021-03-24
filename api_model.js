@@ -15,7 +15,7 @@ const pool = new Pool({
 
 const getLocations = () => {
     return new Promise(function(resolve, reject) {
-      pool.query('SELECT * FROM econprofit.locations ORDER BY id ASC', (error, results) => {
+      pool.query('SELECT * FROM econprofit.locations ORDER BY id asc', (error, results) => {
         if (error) {
           reject(error)
         }
@@ -123,6 +123,30 @@ const getSessionInfo = (id) => {
   }) 
 }
 
+const getPercentInfo = () => {
+  return new Promise(function(resolve, reject) {
+    pool.query('select econprofit.locations.name, econprofit.locations.address, econprofit.locations.region, econprofit.locations.latitude, econprofit.locations.longitude,  sum(kwh) from econprofit.sessions, econprofit.stations, econprofit.locations where econprofit.sessions.friendlycode = econprofit.stations.friendlycode and econprofit.stations.locationid = econprofit.locations.id  group by econprofit.locations.name, econprofit.locations.address, econprofit.locations.latitude, econprofit.locations.longitude, econprofit.locations.region', (error, results) => {
+      if (error) {
+        reject(error)
+      }
+      resolve(results.rows);
+    })
+  }) 
+}
+
+const getCountInfo = () => {
+  return new Promise(function(resolve, reject) {
+    pool.query('select econprofit.locations.id, econprofit.locations.name, count(econprofit.stations.friendlycode) from econprofit.stations, econprofit.locations where econprofit.stations.locationid = econprofit.locations.id group by econprofit.locations.name,econprofit.locations.id', (error, results) => {
+      if (error) {
+        reject(error)
+      }
+      resolve(results.rows);
+    })
+  }) 
+}
+
+
+
 const getByRegion = () => {
   return new Promise(function(resolve, reject) {
     pool.query('select econprofit.locations.company, sum(kwh) as sumkwh, sum(totalcost) as sumtotal, count(econprofit.sessions.id) from econprofit.sessions, econprofit.stations, econprofit.locations where econprofit.stations.friendlycode = econprofit.sessions.friendlycode and econprofit.stations.locationid = econprofit.locations.id GROUP BY econprofit.locations.company', (error, results) => {
@@ -142,7 +166,18 @@ const getByConnector = () => {
       }
       resolve(results.rows);
     })
-  }) 
+  })
+}
+
+const getLastDate = () => {
+  return new Promise(function(resolve, reject) {
+    pool.query('select chargingfrom from econprofit.sessions order by chargingfrom desc limit 1', (error, results) => {
+      if (error) {
+        reject(error)
+      }
+      resolve(results.rows);
+    })
+  })
 }
 
 const pushNewDay = (body) => {
@@ -171,5 +206,8 @@ module.exports = {
   getLocationInfo,
   getSessionInfo,
   getByRegion,
-  getByConnector
+  getByConnector,
+  getPercentInfo,
+  getCountInfo,
+  getLastDate
 }
