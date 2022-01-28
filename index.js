@@ -20,7 +20,7 @@ app.use(function(req, res, next) {
 const testing = (from, to) => {
     const options = {
         // uri: `https://belorusneft.etrel.com/UrchinWebApi/chargingSessions?pageNumber=1&sortColumn=energyConsumtion&sortDirection=asc&chargingFrom=${from}&chargingTo=${to}`,
-        uri: `https://belorusneft.etrel.com/UrchinWebApi/chargingSessions?pageNumber=1&sortColumn=energyConsumtion&sortDirection=asc&chargingFrom=2022-01-02&chargingTo=2022-01-03`,
+        uri: `https://belorusneft.etrel.com/UrchinWebApi/chargingSessions?pageNumber=1&sortColumn=energyConsumtion&sortDirection=asc&chargingFrom=2022-01-23&chargingTo=2022-01-24`,
         headers: {
             'User-Agent': 'Request-Promise',
             'Content-Type': 'application/json; charset=utf-8',
@@ -206,6 +206,16 @@ const testing = (from, to) => {
 
 app.get('/regionstat', (req, res) => {
     api_model.getRegionStat()
+        .then(response => {
+            res.status(200).send(response);
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        })
+})
+
+app.get('/dest', (req, res) => {
+    api_model.getDestination()
         .then(response => {
             res.status(200).send(response);
         })

@@ -125,7 +125,7 @@ const getSessionInfo = (id) => {
 
 const getPercentInfo = () => {
     return new Promise(function(resolve, reject) {
-        pool.query("select econprofit.locations.name, econprofit.locations.address, econprofit.locations.region, econprofit.locations.latitude, econprofit.locations.longitude,  sum(kwh) from econprofit.sessions, econprofit.stations, econprofit.locations where econprofit.sessions.friendlycode = econprofit.stations.friendlycode and econprofit.stations.locationid = econprofit.locations.id and chargingfrom >= '2022-01-01' group by econprofit.locations.name, econprofit.locations.address, econprofit.locations.latitude, econprofit.locations.longitude, econprofit.locations.region", (error, results) => {
+        pool.query("select econprofit.locations.name, econprofit.locations.address, econprofit.locations.region, econprofit.locations.latitude, econprofit.locations.longitude,  sum(kwh), nearplaces, nearplaces_add, company from econprofit.sessions, econprofit.stations, econprofit.locations where econprofit.sessions.friendlycode = econprofit.stations.friendlycode and econprofit.stations.locationid = econprofit.locations.id and chargingfrom >= '2022-01-01' group by econprofit.locations.name, econprofit.locations.address, econprofit.locations.latitude, econprofit.locations.longitude, econprofit.locations.region, nearplaces, nearplaces_add, company order by sum desc", (error, results) => {
             if (error) {
                 reject(error)
             }
@@ -201,6 +201,19 @@ const getRegionStat = () => {
 //     })
 //   })
 // }
+
+
+const getDestination = () => {
+    return new Promise(function(resolve, reject) {
+        pool.query("select company, destination, count(name) from econprofit.locations, econprofit.stations where econprofit.locations.id = econprofit.stations.locationid group by region, company, destination order by company", (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
 
 const getRegionSess = () => {
     return new Promise(function(resolve, reject) {
@@ -299,6 +312,7 @@ module.exports = {
     getCountInfo,
     getLastDate,
     getRegionStat,
+    getDestination,
     getRegionSess,
     getRegionStationCount,
     getByMode,
