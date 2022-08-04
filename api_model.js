@@ -114,7 +114,7 @@ const getLocationInfo = (id) => {
 
 const getSessionInfo = (id) => {
     return new Promise(function(resolve, reject) {
-        pool.query("select * from econprofit.sessions, econprofit.stations where econprofit.sessions.friendlycode = econprofit.stations.friendlycode and chargingfrom >= '2022-01-01' and econprofit.stations.locationid = $1", [id], (error, results) => {
+        pool.query("select * from econprofit.sessions, econprofit.stations where econprofit.sessions.friendlycode = econprofit.stations.friendlycode  and  econprofit.stations.locationid = $1", [id], (error, results) => {
             if (error) {
                 reject(error)
             }
@@ -136,7 +136,7 @@ const getPercentInfo = () => {
 
 const getCountInfo = () => {
     return new Promise(function(resolve, reject) {
-        pool.query('select econprofit.locations.id, econprofit.locations.name, econprofit.locations.address, count(econprofit.stations.friendlycode) from econprofit.stations, econprofit.locations where econprofit.stations.locationid = econprofit.locations.id group by econprofit.locations.name,econprofit.locations.id', (error, results) => {
+        pool.query('select econprofit.locations.id, econprofit.locations.name, econprofit.locations.address, econprofit.locations.cp_2022, count(econprofit.stations.friendlycode) from econprofit.stations, econprofit.locations where econprofit.stations.locationid = econprofit.locations.id group by econprofit.locations.name,econprofit.locations.id', (error, results) => {
             if (error) {
                 reject(error)
             }
@@ -228,7 +228,18 @@ const getRegionSess = () => {
 
 const getRegionStationCount = () => {
     return new Promise(function(resolve, reject) {
-        pool.query("select econprofit.locations.company, count(econprofit.stations.friendlycode) from econprofit.locations, econprofit.stations where econprofit.locations.id = econprofit.stations.locationid group by econprofit.locations.company order by econprofit.locations.company", (error, results) => {
+        pool.query("select econprofit.locations.company, count(econprofit.stations.friendlycode), sum(econprofit.locations.cp_2022) as cp from econprofit.locations, econprofit.stations where econprofit.locations.id = econprofit.stations.locationid group by econprofit.locations.company order by econprofit.locations.company", (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+// /////////////////////////////
+const getCP = () => {
+    return new Promise(function(resolve, reject) {
+        pool.query("select econprofit.locations.company, sum(cp_2022) as cp from econprofit.locations group by econprofit.locations.company order by econprofit.locations.company", (error, results) => {
             if (error) {
                 reject(error)
             }
@@ -237,6 +248,19 @@ const getRegionStationCount = () => {
     })
 }
 
+const getRegMarkers = () => {
+    return new Promise(function(resolve, reject) {
+        pool.query("select * from econprofit.regmarkers", (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
+
+// /////////////////////
 const getByMode = () => {
     return new Promise(function(resolve, reject) {
         pool.query("select econprofit.locations.company, econprofit.stations.stationmode, count(econprofit.stations.friendlycode) from econprofit.locations, econprofit.stations where econprofit.locations.id = econprofit.stations.locationid group by econprofit.locations.company, econprofit.stations.stationmode order by econprofit.locations.company, econprofit.stations.stationmode", (error, results) => {
@@ -270,6 +294,17 @@ const getTimeSpendByRegion = () => {
     })
 }
 
+const getConstantByMonth = () => {
+    return new Promise(function(resolve, reject) {
+        pool.query('select * from econprofit.constants', (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
 const getByModeCountry = () => {
     return new Promise(function(resolve, reject) {
         pool.query('select econprofit.stations.stationmode, count(econprofit.stations.friendlycode) from econprofit.locations, econprofit.stations where econprofit.locations.id = econprofit.stations.locationid group by econprofit.stations.stationmode order by econprofit.stations.stationmode', (error, results) => {
@@ -292,6 +327,60 @@ const pushNewDay = (body) => {
         })
     })
 }
+
+const addConstant = (body) => {
+    const now = new Date();
+    return new Promise(function(resolve, reject) {
+        console.log('hello world')
+        const {name,
+            monthdate,
+            sumkwh,
+            kwhperday,
+            sumcost,
+            nds,
+            costwnds,
+            energy,
+            bank,
+            amort,
+            techobsl,
+            rent,
+            insure,
+            zp,
+            prog,
+            sviaz,
+            askue,
+            komandir,
+            other, 
+            plan,
+            energykwh} = body
+        pool.query('INSERT INTO econprofit.constants(name, monthdate, sumkwh, kwhperday, sumcost, nds, costwnds, energy,bank, amort, techobsl, rent, insure, zp, prog, sviaz, askue, komandir, other, plan,energykwh) VALUES ($1,$2, $3,$4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) RETURNING *', [name,
+            monthdate,
+            Number(sumkwh),
+            Number(kwhperday),
+                Number(sumcost),
+                    Number(nds),
+                        Number(costwnds),
+                            Number(energy),
+                                Number(bank),
+                                    Number(amort),
+                                        Number(techobsl),
+                                            Number(rent),
+                                                Number(insure),
+                                                    Number(zp),
+                                                        Number(prog),
+                                                            Number(sviaz),
+                                                                Number(askue),
+                                                                    Number(komandir),
+                                                                        Number(other),
+                                                                            Number(plan),
+                                                                                Number(energykwh)], (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(`A new merchant has been added added: `)
+        })
+    })
+  }
 
 module.exports = {
     getLocations,
@@ -317,5 +406,9 @@ module.exports = {
     getRegionStationCount,
     getByMode,
     getByModeCountry,
-    getTimeSpend
+    getTimeSpend,
+    getCP,
+    getRegMarkers,
+    addConstant,
+    getConstantByMonth
 }
