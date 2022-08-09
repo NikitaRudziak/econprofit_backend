@@ -228,7 +228,7 @@ const getRegionSess = () => {
 
 const getRegionStationCount = () => {
     return new Promise(function(resolve, reject) {
-        pool.query("select econprofit.locations.company, count(econprofit.stations.friendlycode), sum(econprofit.locations.cp_2022) as cp from econprofit.locations, econprofit.stations where econprofit.locations.id = econprofit.stations.locationid group by econprofit.locations.company order by econprofit.locations.company", (error, results) => {
+        pool.query("select econprofit.locations.company, count(econprofit.stations.friendlycode), sum(econprofit.locations.cp_2022) as cp, sum(kapzatr) as  kapzatr from econprofit.locations, econprofit.stations where econprofit.locations.id = econprofit.stations.locationid group by econprofit.locations.company order by econprofit.locations.company", (error, results) => {
             if (error) {
                 reject(error)
             }
@@ -236,6 +236,34 @@ const getRegionStationCount = () => {
         })
     })
 }
+
+const getTotalZatr = () => {
+    return new Promise(function(resolve, reject) {
+        pool.query("select econprofit.locations.company, sum(kapzatr) as  kapzatr from econprofit.locations group by econprofit.locations.company order by econprofit.locations.company", (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
+const getTotalMonth = (from, to) => {
+    return new Promise(function(resolve, reject) {
+        // const { from, to } = body
+        // console.log(from)
+        // console.log(to)
+        pool.query("select econprofit.locations.company, sum(kwh) as totalkwhbyMonth, sum(totalcost) as totalcostbyMonth from econprofit.sessions, econprofit.stations, econprofit.locations where econprofit.stations.friendlycode = econprofit.sessions.friendlycode and econprofit.stations.locationid = econprofit.locations.id and chargingfrom >= $1 and chargingfrom < $2 GROUP BY econprofit.locations.company  order by econprofit.locations.company", [from, to], (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
+
+
 // /////////////////////////////
 const getCP = () => {
     return new Promise(function(resolve, reject) {
@@ -410,5 +438,7 @@ module.exports = {
     getCP,
     getRegMarkers,
     addConstant,
-    getConstantByMonth
+    getConstantByMonth,
+    getTotalMonth,
+    getTotalZatr
 }

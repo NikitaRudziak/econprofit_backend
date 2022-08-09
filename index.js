@@ -302,6 +302,16 @@ app.get('/getregmarkers', (req, res) => {
         })
 })
 
+app.get('/gettotalzatr', (req, res) => {
+    api_model.getTotalZatr()
+        .then(response => {
+            res.status(200).send(response);
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        })
+})
+
 // -----------------------------
 
 app.get('/test/:from/:to', (req, res) => {
@@ -312,6 +322,16 @@ app.get('/test/:from/:to', (req, res) => {
         .catch(err => {
             res.send(err);
         });
+})
+
+app.get('/totalmonth/:from/:to', (req, res) => {
+    api_model.getTotalMonth(req.params['from'], req.params['to'])
+        .then(response => {
+            res.status(200).send(response);
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        })
 })
 
 app.get('/location', (req, res) => {
