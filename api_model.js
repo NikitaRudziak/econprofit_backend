@@ -344,6 +344,28 @@ const getByModeCountry = () => {
     })
 }
 
+const getAlpById = (id) => {
+    return new Promise(function(resolve, reject) {
+        pool.query(`select econprofit.locations.name, round(sum(econprofit.worktypes.minforwork + road) * 52.8 / 60, 2), count(econprofit.worktypes.minforwork)  from econprofit.tickets, econprofit.worktypes, econprofit.stations, econprofit.locations where econprofit.tickets.work = econprofit.worktypes.name and (econprofit.tickets.worktype = 'Заявка' or econprofit.tickets.worktype = 'Ремонт')and econprofit.stations.friendlycode = econprofit.tickets.friendlycode and econprofit.stations.locationid = econprofit.locations.id and dateend >= '2022-08-01' and dateend < '2022-09-01' and econprofit.locations.id = $1 group by econprofit.locations.name, econprofit.locations.road order by round`, [id], (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
+const getAlpTOById = (id) => {
+    return new Promise(function(resolve, reject) {
+        pool.query(`select econprofit.locations.name, count(econprofit.stations.friendlycode) * 1386 as price from econprofit.tickets, econprofit.stations, econprofit.locations where econprofit.tickets.worktype = 'ТО' and econprofit.stations.friendlycode = econprofit.tickets.friendlycode and econprofit.stations.locationid = econprofit.locations.id and dateend >= '2022-06-01' and dateend < '2022-07-01' and econprofit.locations.id = $1 group by econprofit.locations.name`, [id], (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
 const pushNewDay = (body) => {
     return new Promise(function(resolve, reject) {
         const { friendlyCode, chargingFrom, chargingTo, kWh, totalCost, email, connector } = body
@@ -440,5 +462,7 @@ module.exports = {
     addConstant,
     getConstantByMonth,
     getTotalMonth,
-    getTotalZatr
+    getTotalZatr,
+    getAlpById,
+    getAlpTOById
 }

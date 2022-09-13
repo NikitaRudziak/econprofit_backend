@@ -493,6 +493,26 @@ app.get('/timespend/:id', (req, res) => {
         })
 })
 
+app.get('/getalp/:id', (req, res) => {
+    api_model.getAlpById(req.params['id'])
+        .then(response => {
+            res.status(200).send(response);
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        })
+})
+
+app.get('/getalpto/:id', (req, res) => {
+    api_model.getAlpTOById(req.params['id'])
+        .then(response => {
+            res.status(200).send(response);
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        })
+})
+
 app.get('/timespendbyregion', (req, res) => {
     api_model.getTimeSpendByRegion()
         .then(response => {
