@@ -24,6 +24,10 @@ const getLocations = () => {
     })
 }
 
+
+
+
+
 const getStations = () => {
     return new Promise(function(resolve, reject) {
         pool.query('SELECT * FROM econprofit.stations ORDER BY id ASC', (error, results) => {
@@ -367,6 +371,7 @@ const getAlpTOById = (id) => {
 }
 
 const pushNewDay = (body) => {
+    console.log(body)
     return new Promise(function(resolve, reject) {
         const { friendlyCode, chargingFrom, chargingTo, kWh, totalCost, email, connector } = body
         pool.query('INSERT INTO econprofit.sessions (friendlycode, chargingFrom, chargingTo, kWh, totalCost, email, connector) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *', [friendlyCode, chargingFrom, chargingTo, kWh, totalCost, email, connector], (error, results) => {
@@ -432,6 +437,205 @@ const addConstant = (body) => {
     })
   }
 
+//   -------------------------------------
+
+const getLocationForMark = () => {
+    return new Promise(function(resolve, reject) {
+        pool.query(`select econprofit.locations.id, econprofit.locations.name, latitude, longitude, sum(totalcost), kapzatr, count(econprofit.stations.id), sum(power) as power from econprofit.locations, econprofit.stations, econprofit.sessions
+        where econprofit.locations.id = econprofit.stations.locationid and econprofit.sessions.friendlycode =  econprofit.stations.friendlycode and econprofit.sessions.chargingto >= '2023-01-01'
+        group by econprofit.locations.id, econprofit.locations.name, kapzatr`, (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
+const getLocationAbout = (id) => {
+    console.log(id)
+    return new Promise(function(resolve, reject) {
+        pool.query(`Select name, address, region, company, sum(power), count(econprofit.stations.id), destination, nearplaces, latitude, longitude  
+                        from econprofit.locations, econprofit.stations
+                        where econprofit.locations.id = econprofit.stations.locationid and econprofit.locations.id =$1
+                        group by name, address, region, company, destination, nearplaces, latitude, longitude `
+                        , [id],  (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
+const getStationAbout = (id) => {
+    console.log(id)
+    return new Promise(function(resolve, reject) {
+        pool.query(`Select econprofit.guarantee.friendlycode, power, econprofit.guarantee.cumdate from econprofit.stations, econprofit.guarantee where econprofit.guarantee.friendlycode = econprofit.stations.friendlycode and econprofit.stations.locationid = $1`
+                        , [id],  (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
+const getLocationStat = (id) => {
+    console.log(id)
+    return new Promise(function(resolve, reject) {
+        pool.query(`select sum(totalcost) as income, kapzatr, count(econprofit.sessions.id) as sessionCnt, 
+        (select count(econprofit.sessions.id) from econprofit.sessions, econprofit.stations where econprofit.sessions.friendlycode = econprofit.stations.friendlycode and locationid = $1 and kwh < 0.5) as sessionFailCnt,
+        avg(kwh) as avgKwh, avg(chargingto - chargingfrom) as avgTime, sum(kwh) as totalKwh from econprofit.sessions, econprofit.stations, econprofit.locations where econprofit.sessions.friendlycode = econprofit.stations.friendlycode 
+        and econprofit.stations.locationid = econprofit.locations.id and chargingto >= '2023-01-01' and locationid = $1
+        group by kapzatr`
+                        , [id],  (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
+const getLocationsFull = (id) => {
+    console.log(id)
+    let arr = JSON.parse(id)
+    console.log(arr.region)
+    console.log(arr.stationType)
+    console.log(arr.company)
+    console.log(arr.vendor)
+    console.log(arr.locationType)
+    console.log(arr.kwFrom)
+    console.log(arr.kwTo)
+    console.log(arr.stationNum)
+    console.log(Number(arr.stationNum) > 0)
+    // for(let key in id) {
+    //     console.log(key + ":", id[key]);
+    // }
+    return new Promise(function(resolve, reject) {
+        pool.query(`select distinct econprofit.locations.id,econprofit.locations.name, econprofit.locations.address, count(econprofit.stations.id)
+                        from econprofit.locations,econprofit.stations 
+                        where econprofit.stations.locationid = econprofit.locations.id 
+                            and econprofit.locations.region = any($1) 
+                            and econprofit.stations.stationmode = any($2) 
+                            and econprofit.locations.company = any($3) 
+                            and econprofit.stations.vendor = any($4)
+                            and econprofit.locations.nearplaces = any($5)
+                            and econprofit.stations.power >= $6
+                            and econprofit.stations.power <= $7
+                            ${Number(arr.stationNum) > 0 ? 'and econprofit.stations.friendlycode = $8' : 'and econprofit.stations.friendlycode = any(select friendlycode from econprofit.stations)'}
+                            group by econprofit.locations.id, econprofit.locations.name, econprofit.locations.address order by econprofit.locations.name`
+                            , arr.stationNum ? [arr.region, arr.stationType, arr.company, arr.vendor, arr.locationType, arr.kwFrom, arr.kwTo, arr.stationNum] : [arr.region, arr.stationType, arr.company, arr.vendor, arr.locationType, arr.kwFrom, arr.kwTo],  (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
+const getIndicatorsByYear = () => {
+    return new Promise(function(resolve, reject) {
+        pool.query(`SELECT  to_char(date_trunc('year', chargingto), 'DD.MM.YYYY') as date, count(id) as sessionCount, sum(kwh) as sumenergy, (sum(kwh) / 365 ) as avgenergy,sum(totalcost) AS valueVat, sum(totalcost) / 120*20 AS nds
+        FROM econprofit.sessions
+        WHERE chargingto >= '2021-01-01'
+          AND chargingto <= '2023-12-31'
+        GROUP BY date_trunc('year', chargingto)`, (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
+const getUsersCountByYear = () => {
+    return new Promise(function(resolve, reject) {
+        pool.query(`SELECT   to_char(date_trunc('year', chargingto), 'DD.MM.YYYY') as date, count(distinct email) as userCount
+        FROM econprofit.sessions
+        WHERE chargingto >= '2021-01-01'
+          AND chargingto <= '2023-12-31'
+        GROUP BY date_trunc('year', chargingto)`, (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
+const getIndicatorsByYearId = (id) => {
+    console.log(id)
+    return new Promise(function(resolve, reject) {
+        pool.query(`SELECT  to_char(date_trunc('year', chargingto), 'DD.MM.YYYY') as date, count(econprofit.sessions.id) as sessionCount, sum(kwh) as sumenergy, (sum(kwh) / 365 ) as avgenergy,sum(totalcost) AS valueVat, sum(totalcost) / 120*20 AS nds
+        FROM econprofit.sessions,  econprofit.stations, econprofit.locations
+        WHERE chargingto >= '2021-01-01'
+          AND chargingto <= '2023-12-31' and econprofit.stations.locationid = econprofit.locations.id and econprofit.stations.friendlycode = econprofit.sessions.friendlycode and company = $1
+        GROUP BY date_trunc('year', chargingto)`, [id], (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
+const getStationCountByYearId = (id) => {
+    console.log(id)
+    return new Promise(function(resolve, reject) {
+        pool.query(`select to_char(date_trunc('year', cumdate), 'DD.MM.YYYY') as date, count(econprofit.stations.friendlycode)
+        from econprofit.stations, econprofit.locations, econprofit.guarantee 
+        where econprofit.stations.locationid = econprofit.locations.id and econprofit.stations.friendlycode = econprofit.guarantee.friendlycode and company = $1
+        group by date_trunc('year', cumdate)
+        order by date_trunc('year', cumdate) asc`, [id], (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
+const getStationCountByYear = () => {
+    // console.log(id)
+    return new Promise(function(resolve, reject) {
+        pool.query(`select to_char(date_trunc('year', cumdate), 'DD.MM.YYYY') as date, count(econprofit.stations.friendlycode)
+        from econprofit.stations, econprofit.locations, econprofit.guarantee 
+        where econprofit.stations.locationid = econprofit.locations.id and econprofit.stations.friendlycode = econprofit.guarantee.friendlycode
+        group by date_trunc('year', cumdate)
+        order by date_trunc('year', cumdate) asc`, (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
+const getMainIndicatorsList = (id) => {
+    let arr = JSON.parse(id)
+    console.log(arr)
+    // let param = null;
+    // if (id == "Выручка") {
+    //     param = 'totalcost'
+    // }
+    // console.log(param)
+    return new Promise(function(resolve, reject) {
+        pool.query(`select econprofit.locations.id, econprofit.locations.name, econprofit.locations.address, sum(kwh) as sumkwh, sum(totalcost) as totalcost, count(econprofit.sessions.id) as sessioncount
+        from econprofit.locations, econprofit.stations, econprofit.sessions 
+        where econprofit.locations.id = econprofit.stations.locationid 
+        and econprofit.stations.friendlycode = econprofit.sessions.friendlycode
+        and chargingfrom >= $1 and  chargingto < $2
+        group by econprofit.locations.id, econprofit.locations.name, econprofit.locations.address`, [arr.dateFrom, arr.dateTo], (error, results) => {
+            if (error) {
+                reject(error)
+            }
+            resolve(results.rows);
+        })
+    })
+}
+
 module.exports = {
     getLocations,
     getStations,
@@ -464,5 +668,17 @@ module.exports = {
     getTotalMonth,
     getTotalZatr,
     getAlpById,
-    getAlpTOById
+    getAlpTOById,
+    // -----------------------------------
+    getLocationsFull,
+    getLocationAbout,
+    getStationAbout,
+    getLocationStat,
+    getLocationForMark,
+    getIndicatorsByYear,
+    getMainIndicatorsList,
+    getIndicatorsByYearId,
+    getStationCountByYearId,
+    getStationCountByYear,
+    getUsersCountByYear
 }
